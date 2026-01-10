@@ -1,2 +1,3 @@
-# MovieMeet
-this projects goal will be an application which will stream real time movie between multiple system with low internet 
+# Helix
+Creating a production debugging system that record API requests, application state, and environment metadata so failed or anomalous requests can be deterministically replayed later in isolated Docker environments.
+
