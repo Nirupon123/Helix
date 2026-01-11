@@ -17,8 +17,8 @@ class OrganizationViewSet(ModelViewSet):
     def get_queryset(self):
         """using ' __ 'go through a 
           relationship and related_name 
-          in models set is 'members' so i 
-          can can access the members using 
+          in models set is 'members' so it 
+          can access the members using 
           that related name"""
         return Organization.objects.filter(
             members__user=self.request.user, 
