@@ -1,8 +1,6 @@
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
-from django.core.exceptions import PermissionDenied
-
 
 User = settings.AUTH_USER_MODEL
 
@@ -10,19 +8,24 @@ User = settings.AUTH_USER_MODEL
 class Organization(models.Model):
 
     name = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True)
+
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        editable=False
+    )
+
     owner = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
         related_name="owned_organization"
     )
+
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Organization behavior toggles
     settings = models.JSONField(default=dict, blank=True)
-
 
     class Meta:
         ordering = ["name"]
@@ -31,9 +34,17 @@ class Organization(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        # Auto-generate slug if missing
         if not self.slug:
-            self.slug = slugify(self.name)
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+
+            while Organization.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
         super().save(*args, **kwargs)
 
     DEFAULT_SETTINGS = {
@@ -45,16 +56,18 @@ class Organization(models.Model):
     }
 
     def get_setting(self, key):
-        return self.settings.get(key, self.DEFAULT_SETTINGS.get(key)) # Fallback to default if not set in frontend for backward compatibility
+        return self.settings.get(
+            key,
+            self.DEFAULT_SETTINGS.get(key)
+        )
 
     def is_snapshot_enabled(self):
         return self.get_setting("snapshots_enabled")
 
     def is_replay_enabled(self):
         return self.get_setting("replay_enabled")
+
     
-
-
 
 
 class OrganizationMember(models.Model):
